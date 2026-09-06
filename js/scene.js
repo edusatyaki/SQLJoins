@@ -43,7 +43,10 @@ const LAYOUT = {
   customer: { title: 'customers', cols: [380, 235, 273], head: ['customer_id', 'name', 'city'] },
   order:    { title: 'orders',    cols: [285, 390, 213], head: ['order_id', 'customer_id', 'amount'] },
   result:   { title: 'result',    cols: [444, 444],      head: ['name', 'amount'] },
-  set:      { title: 'students',  cols: [888],           head: ['student'] }
+  setL:     { title: 'merit_list',  cols: [888],         head: ['student'] },
+  setR:     { title: 'sports_list', cols: [888],         head: ['student'] },
+  setOut:   { title: 'result',      cols: [888],         head: ['student'] },
+  set:      { title: 'students',    cols: [888],         head: ['student'] }
 };
 
 /* ---------- geometry ---------- */
@@ -80,7 +83,7 @@ function paintColumns(g, W, H, cols, drawCell) {
 
   /* faint vertical rules at every column boundary - this is what makes
      the stack read as a table rather than as a list of labels */
-  g.strokeStyle = 'rgba(255,255,255,0.28)';
+  g.strokeStyle = 'rgba(255,255,255,0.36)';
   g.lineWidth = 2;
   for (let i = 1; i < cols.length; i++) {
     const bx = xs[i] - 12;
@@ -123,7 +126,7 @@ function headTexture(kind) {
 
   /* line 1: the table's name */
   g.font = `600 34px ${SANS}`;
-  g.fillStyle = 'rgba(255,255,255,0.80)';
+  g.fillStyle = 'rgba(255,255,255,0.90)';
   g.letterSpacing = '4px';
   g.fillText((L.title || '').toUpperCase(), PAD, H * 0.24);
   g.letterSpacing = '0px';
@@ -132,7 +135,7 @@ function headTexture(kind) {
   const cols = L.cols;
   let x = PAD;
   const xs = cols.map(w => { const v = x; x += w; return v; });
-  g.strokeStyle = 'rgba(255,255,255,0.26)';
+  g.strokeStyle = 'rgba(255,255,255,0.34)';
   g.lineWidth = 2;
   for (let i = 1; i < cols.length; i++) {
     const bx = xs[i] - 12;
@@ -227,7 +230,9 @@ export function createScene(canvas) {
     left:   new Card(headTexture('customer'), HEAD_H),
     right:  new Card(headTexture('order'), HEAD_H),
     result: new Card(headTexture('result'), HEAD_H),
-    sets:   new Card(headTexture('set'), HEAD_H)
+    setL:   new Card(headTexture('setL'), HEAD_H),
+    setR:   new Card(headTexture('setR'), HEAD_H),
+    setOut: new Card(headTexture('setOut'), HEAD_H)
   };
   const leftCards = new Map(CUSTOMERS.map(c => [c.id, new Card(rowTexture(c.cells, 'customer'))]));
   const rightCards = new Map(ORDERS.map(o => [o.id, new Card(rowTexture(o.cells, 'order'))]));
@@ -355,17 +360,17 @@ export function createScene(canvas) {
     if (mode === 'sets') {
       const sets = s.sets || {};
       const L = sets.left || [], R = sets.right || [], O = sets.out || [];
-      headers.sets.setState('header');
-      headers.sets.moveTo(-COL_X, headY(L.length), BACK_Z);
-      headers.sets.tOpacity = 1;
+      headers.setL.setState('header');
+      headers.setL.moveTo(-COL_X, headY(L.length), BACK_Z);
+      headers.setL.tOpacity = L.length ? 1 : 0;
 
-      headers.right.setState('header');
-      headers.right.moveTo(COL_X, headY(R.length), BACK_Z);
-      headers.right.tOpacity = 0;   /* orders header is meaningless here */
+      headers.setR.setState('header');
+      headers.setR.moveTo(COL_X, headY(R.length), BACK_Z);
+      headers.setR.tOpacity = R.length ? 1 : 0;
 
-      headers.result.setState('header');
-      headers.result.moveTo(0, headY(O.length), FRONT_Z);
-      headers.result.tOpacity = O.length ? 1 : 0;
+      headers.setOut.setState('header');
+      headers.setOut.moveTo(0, headY(O.length, 0.86), FRONT_Z);
+      headers.setOut.tOpacity = O.length ? 1 : 0;
 
       L.forEach((n, i) => {
         const card = setCard('l', n);

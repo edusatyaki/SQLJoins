@@ -9,16 +9,16 @@
   --bg-2:#131A23;
   --surface:#161D26;
   --surface-2:#1B242F;
-  --ink:#F3F7FB;
-  --ink-2:#C6D2DE;
-  --ink-3:#9AA8B6;
+  --ink:#F9FBFE;
+  --ink-2:#DCE6EF;
+  --ink-3:#B7C3CF;
   --rule:#252F3B;
   --rule-2:#3E4C5C;
   --accent:#58A6E8;
   --accent-dim:#16283A;
   --keep:#4FBF8B;
   --drop:#E8894A;
-  --null:#A6B1BE;
+  --null:#C2CCD7;
   --shadow:0 18px 44px -28px rgba(0,0,0,.9);
 }
 
@@ -123,7 +123,7 @@ code,.sql,.res{font-family:"IBM Plex Mono",monospace}
 .sql-wrap{border-left:3px solid var(--accent)}
 .blocktag{
   display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  letter-spacing:.14em;text-transform:uppercase;color:#C9D5E1;
   padding:7px 12px 6px;border-bottom:1px solid var(--rule);background:var(--surface-2);
 }
 .sql{margin:0;padding:11px 0;overflow-x:auto;font-size:14.5px;line-height:1.7}
@@ -131,22 +131,22 @@ code,.sql,.res{font-family:"IBM Plex Mono",monospace}
 .sql .ln.on{background:#1B3450;border-left-color:var(--accent)}
 /* dim un-highlighted lines with opacity, not colour, so the syntax
    colours survive instead of being flattened to grey */
-.sql .ln.off{opacity:.58}
+.sql .ln.off{opacity:.8}
 
 /* SQL tokens */
-.sql .k{color:#8CC6F0;font-weight:500}   /* keyword    */
-.sql .f{color:#F0BC7A}                   /* function   */
-.sql .a{color:#86E5D2}                   /* table alias*/
-.sql .s{color:#B6E389}                   /* string     */
-.sql .n{color:#F5A167}                   /* number     */
-.sql .c{color:#93A0AE;font-style:italic} /* comment    */
-.sql .p{color:#AAB8C6}                   /* punctuation*/
-.sql .v{color:#F2F7FC}                   /* identifier */
+.sql .k{color:#A5D4F6;font-weight:600}   /* keyword    */
+.sql .f{color:#FBCB90}                   /* function   */
+.sql .a{color:#9DEFDF}                   /* table alias*/
+.sql .s{color:#C8EDA1}                   /* string     */
+.sql .n{color:#FFB68A}                   /* number     */
+.sql .c{color:#AAB6C3;font-style:italic} /* comment    */
+.sql .p{color:#C2CEDA}                   /* punctuation*/
+.sql .v{color:#FFFFFF}                   /* identifier */
 
 .res{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
 .res th,.res td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--rule)}
 .res thead th{
-  font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+  font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#C9D5E1;
   background:var(--surface-2);
 }
 .res tbody tr:last-child td{border-bottom:none}
