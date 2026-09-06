@@ -72,6 +72,11 @@ body{
   padding:26px 28px;overflow-y:auto;border-right:1px solid var(--rule);
   display:flex;flex-direction:column;
 }
+/* Flex children default to flex-shrink:1, so in a short panel the SQL and
+   result blocks were being squashed and then clipped by their own
+   overflow:hidden - a 5-line query rendered as one line. Keep them at their
+   natural height and let the panel scroll instead. */
+.panel > *{flex-shrink:0}
 .kicker{
   font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
   letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;
@@ -118,7 +123,7 @@ code,.sql,.res{font-family:"IBM Plex Mono",monospace}
   letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
   padding:7px 12px 6px;border-bottom:1px solid var(--rule);background:var(--surface-2);
 }
-.sql{margin:0;padding:10px 0;overflow-x:auto;font-size:13px;line-height:1.65}
+.sql{margin:0;padding:11px 0;overflow-x:auto;font-size:14.5px;line-height:1.7}
 .sql .ln{display:block;padding:0 12px;border-left:2px solid transparent;white-space:pre}
 .sql .ln.on{background:#1B3450;border-left-color:var(--accent)}
 /* dim un-highlighted lines with opacity, not colour, so the syntax
@@ -135,10 +140,10 @@ code,.sql,.res{font-family:"IBM Plex Mono",monospace}
 .sql .p{color:#AAB8C6}                   /* punctuation*/
 .sql .v{color:#F2F7FC}                   /* identifier */
 
-.res{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
-.res th,.res td{text-align:left;padding:6px 12px;border-bottom:1px solid var(--rule)}
+.res{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.res th,.res td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--rule)}
 .res thead th{
-  font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+  font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
   background:var(--surface-2);
 }
 .res tbody tr:last-child td{border-bottom:none}
