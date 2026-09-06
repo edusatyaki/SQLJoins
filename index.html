@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How a JOIN Works &middot; Step-by-step</title>
+<meta name="description" content="An interactive, keyboard-driven walkthrough of PostgreSQL joins and set operations, with a 3D visualisation of how rows are matched and combined.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128024;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+
+<div class="deck">
+
+  <header class="topbar">
+    <span class="brand"><b>JOIN</b> &mdash; step by step</span>
+    <span class="crumb" id="crumb">&nbsp;</span>
+    <button class="ghostbtn" id="helpBtn" type="button" aria-haspopup="dialog">Keys</button>
+  </header>
+
+  <main class="stage-grid">
+
+    <section class="panel" id="panel" aria-live="polite">
+      <p class="kicker" id="kicker">&nbsp;</p>
+      <h1 class="slide-title" id="title">&nbsp;</h1>
+      <div class="say" id="say"></div>
+      <figure class="venn-wrap" id="vennWrap" hidden>
+        <div id="venn"></div>
+        <figcaption class="venn-cap" id="vennCap"></figcaption>
+      </figure>
+      <div class="sql-wrap" id="sqlWrap" hidden>
+        <span class="blocktag">sql</span>
+        <pre class="sql" id="sql"></pre>
+      </div>
+      <div class="res-wrap" id="resWrap" hidden>
+        <span class="blocktag" id="resTag">result</span>
+        <table class="res" id="res"></table>
+      </div>
+    </section>
+
+    <section class="stage" id="stage">
+      <canvas id="gl"></canvas>
+      <div class="stage-fallback" id="fallback" hidden>
+        <p>The 3D view could not load, so this deck is running in text-only mode.<br>
+        Everything still works &mdash; keep using <kbd>&larr;</kbd> and <kbd>&rarr;</kbd>.</p>
+      </div>
+      <p class="stage-legend" id="legend"></p>
+    </section>
+
+  </main>
+
+  <footer class="controlbar">
+    <button class="navbtn" id="prevBtn" type="button" aria-label="Previous step">&larr;</button>
+    <div class="progress" id="progress" role="group" aria-label="Slides"></div>
+    <button class="navbtn" id="nextBtn" type="button" aria-label="Next step">&rarr;</button>
+    <span class="stepcount" id="stepcount">&nbsp;</span>
+  </footer>
+
+</div>
+
+<dialog class="help" id="help">
+  <h2>Keyboard</h2>
+  <dl>
+    <dt><kbd>&rarr;</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd></dt><dd>Next step</dd>
+    <dt><kbd>&larr;</kbd> <kbd>PgUp</kbd></dt><dd>Previous step</dd>
+    <dt><kbd>&darr;</kbd> / <kbd>&uarr;</kbd></dt><dd>Skip a whole slide</dd>
+    <dt><kbd>Home</kbd> / <kbd>End</kbd></dt><dd>First / last step</dd>
+    <dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
+    <dt><kbd>?</kbd></dt><dd>This panel</dd>
+  </dl>
+  <p class="help-note">Your position is kept in the URL, so a link points at an exact step.</p>
+  <button class="ghostbtn" id="helpClose" type="button">Close</button>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
