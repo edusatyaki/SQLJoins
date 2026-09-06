@@ -60,6 +60,18 @@ git branch -M main && git remote add origin git@github.com:USER/REPO.git && git 
 All paths are relative, so it works from a project subpath without changes.
 `.nojekyll` is included so GitHub serves the files as-is.
 
+## The SQL
+
+[`joins.sql`](joins.sql) is the whole lesson as one runnable script — schema,
+seed data, and every query in the deck with its real output in the comments.
+
+```bash
+psql -d yourdb -f joins.sql
+```
+
+Verified end to end on PostgreSQL 16: it runs clean, and every result written
+in a comment is the actual output of that query against the seed data.
+
 ## Files
 
 ```
