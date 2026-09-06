@@ -15,7 +15,7 @@ Built as a companion to the Lecture 8 class notes.
 | <kbd>&larr;</kbd> <kbd>PgUp</kbd> | Previous step |
 | <kbd>&darr;</kbd> / <kbd>&uarr;</kbd> | Skip a whole slide |
 | <kbd>Home</kbd> / <kbd>End</kbd> | First / last step |
-| <kbd>F</kbd> | Fullscreen |
+| <kbd>F</kbd> | Fullscreen (or the **Full** button in the top bar) |
 | <kbd>?</kbd> | Key reference |
 
 Swipe left/right on touch devices. The current step is written into the URL

@@ -14,6 +14,7 @@ const el = {
   venn: $('venn'), vennWrap: $('vennWrap'), vennCap: $('vennCap'),
   stage: $('stage'), legend: $('legend'), progress: $('progress'), stepcount: $('stepcount'),
   prev: $('prevBtn'), next: $('nextBtn'), help: $('help'),
+  fsBtn: $('fsBtn'), fsLabel: $('fsLabel'), fsPath: $('fsPath'),
   fallback: $('fallback')
 };
 
@@ -211,10 +212,7 @@ addEventListener('keydown', e => {
     case 'ArrowUp': nextSlide(-1); break;
     case 'Home': go(0); break;
     case 'End': go(flat.length - 1); break;
-    case 'f': case 'F':
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen?.();
-      return;
+    case 'f': case 'F': toggleFullscreen(); return;
     case '?': el.help.showModal(); return;
     default: return;
   }
@@ -228,6 +226,45 @@ addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
   if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.6) go(cursor + (dx < 0 ? 1 : -1));
 }, { passive: true });
+
+/* ---------- fullscreen ----------
+   Safari still needs the webkit-prefixed calls, and the state has to be read
+   back from the document: the viewer can leave fullscreen with Esc or the
+   system chrome without ever touching our button. */
+const ICON_EXPAND = 'M1 6V1h5M15 10v5h-5M15 6V1h-5M1 10v5h5';
+const ICON_COLLAPSE = 'M6 1v5H1M10 15v-5h5M10 1v5h5M6 15v-5H1';
+const fsRoot = document.documentElement;
+const fsActive = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const fsSupported = !!(fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen);
+
+function toggleFullscreen() {
+  if (!fsSupported) return;
+  if (fsActive()) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    const req = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
+    const r = req.call(fsRoot);
+    if (r && r.catch) r.catch(() => {});   /* denied, e.g. no user gesture */
+  }
+}
+
+function syncFullscreen() {
+  const on = !!fsActive();
+  el.fsBtn.setAttribute('aria-pressed', String(on));
+  el.fsLabel.textContent = on ? 'Exit' : 'Full';
+  el.fsPath.setAttribute('d', on ? ICON_COLLAPSE : ICON_EXPAND);
+  el.fsBtn.title = on ? 'Exit fullscreen (F)' : 'Fullscreen (F)';
+  if (scene) scene.resize();
+}
+
+if (fsSupported) {
+  el.fsBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  document.addEventListener('webkitfullscreenchange', syncFullscreen);
+  syncFullscreen();
+} else {
+  el.fsBtn.hidden = true;
+}
 
 /* ---------- help dialog ---------- */
 const closeHelp = () => el.help.close();
