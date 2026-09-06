@@ -15,7 +15,7 @@
 -- 0. SETUP
 -- =====================================================================
 
-DROP TABLE IF EXISTS orders, products, customers, merit_list, sports_list CASCADE;
+DROP TABLE IF EXISTS orders, products, customers CASCADE;
 
 -- referred_by points back into THIS SAME table (used by the self join, §11)
 CREATE TABLE customers (
@@ -57,12 +57,6 @@ INSERT INTO orders (order_id, customer_id, product_id, amount) VALUES
     (102, 1, 'P7', 1200),
     (103, 2, 'P9', 8000),
     (104, 4, 'P7', 3000);    -- customer_id 4 does not exist -> ORPHAN ROW
-
-CREATE TABLE merit_list  (student VARCHAR(50));
-CREATE TABLE sports_list (student VARCHAR(50));
-
-INSERT INTO merit_list  VALUES ('Aarav'), ('Diya'), ('Kabir');
-INSERT INTO sports_list VALUES ('Diya'),  ('Kabir'), ('Ishaan');
 
 
 -- =====================================================================
@@ -507,50 +501,64 @@ ORDER BY c.customer_id, p.product_id;
 -- A JOIN adds COLUMNS (horizontal). A set operation adds ROWS (vertical).
 -- HARD RULE: both SELECTs must return the same number of columns, in the
 -- same order, with compatible types. Names come from the first SELECT.
+--
+-- Same two tables as every join above - just one column from each:
+--   customers.customer_id -> 1, 2, 3
+--   orders.customer_id    -> 1, 1, 2, 4     (Aarav twice, and the orphan)
 
 -- UNION ALL - stack, keep everything. No dedup step, so it is FASTER.
-SELECT student FROM merit_list
+SELECT customer_id FROM customers
 UNION ALL
-SELECT student FROM sports_list;
--- 6 rows: Aarav, Diya, Kabir, Diya, Kabir, Ishaan
+SELECT customer_id FROM orders;
+-- 7 rows: 1, 2, 3, 1, 1, 2, 4
 
 -- UNION - stack and remove duplicates (costs a sort).
-SELECT student FROM merit_list
+SELECT customer_id FROM customers
 UNION
-SELECT student FROM sports_list
-ORDER BY student;
--- 4 rows: Aarav, Diya, Ishaan, Kabir
+SELECT customer_id FROM orders
+ORDER BY customer_id;
+-- 4 rows: 1, 2, 3, 4
 --
 -- WHEN THE DIFFERENCE MATTERS: when a duplicate is a real separate event
--- you must count (two purchases, two logins) -> UNION ALL, or you
--- under-count. On a unique key duplicates cannot occur, so UNION ALL is
--- simply the faster choice. Default to UNION ALL.
+-- you must count. It is one here - customer 1 appears twice in orders
+-- because Aarav placed TWO orders, and UNION hides that. On a unique key
+-- duplicates cannot occur, so UNION ALL is simply the faster choice.
 
--- INTERSECT - only rows present in BOTH.
-SELECT student FROM merit_list
+-- INTERSECT - only values present in BOTH: customers who have ordered.
+SELECT customer_id FROM customers
 INTERSECT
-SELECT student FROM sports_list
-ORDER BY student;
--- 2 rows: Diya, Kabir
+SELECT customer_id FROM orders
+ORDER BY customer_id;
+-- 2 rows: 1, 2      (Aarav and Diya)
 -- If the two queries share nothing, INTERSECT returns an EMPTY SET
 -- (0 rows). That is a valid answer, not an error.
 
--- EXCEPT - rows in the FIRST set that are not in the second.
--- NOT symmetric: swap the queries and you get Ishaan instead.
-SELECT student FROM merit_list
+-- EXCEPT - values in the FIRST set that are not in the second.
+SELECT customer_id FROM customers
 EXCEPT
-SELECT student FROM sports_list;
--- 1 row: Aarav
--- Oracle spells this MINUS. PostgreSQL / SQL Server / SQLite use EXCEPT.
+SELECT customer_id FROM orders;
+-- 1 row: 3          Kabir, who never ordered - the anti-join of §10,
+--                   written as sets.
+
+-- EXCEPT IS NOT SYMMETRIC. Swap the queries and you get the other
+-- broken row: the orphan order's customer, who does not exist.
+SELECT customer_id FROM orders
+EXCEPT
+SELECT customer_id FROM customers;
+-- 1 row: 4
+--
+-- Between them, those two queries find BOTH broken rows - the same two
+-- the FULL OUTER JOIN surfaced in §8.
+-- Oracle spells EXCEPT as MINUS. PostgreSQL / SQL Server / SQLite use EXCEPT.
 
 -- DETAILS THAT BITE:
 --   ORDER BY belongs to the WHOLE result, so it goes at the very end, once.
 --   INTERSECT binds TIGHTER than UNION and EXCEPT - use parentheses.
-(SELECT student FROM merit_list UNION SELECT student FROM sports_list)
+(SELECT customer_id FROM customers UNION SELECT customer_id FROM orders)
 EXCEPT
-SELECT student FROM merit_list
-ORDER BY student;
--- 1 row: Ishaan
+SELECT customer_id FROM customers
+ORDER BY customer_id;
+-- 1 row: 4
 -- INTERSECT ALL and EXCEPT ALL also exist; they keep duplicate multiplicity.
 
 
@@ -649,4 +657,4 @@ WHERE rn = 1;
 -- =====================================================================
 -- 22. CLEANUP
 -- =====================================================================
--- DROP TABLE IF EXISTS orders, products, customers, merit_list, sports_list CASCADE;
+-- DROP TABLE IF EXISTS orders, products, customers CASCADE;

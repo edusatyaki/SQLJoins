@@ -445,60 +445,92 @@ export const slides = [
 
 /* --------------------------------------------------------------- 10 */
 (() => {
-  const MERIT = ['Aarav', 'Diya', 'Kabir'];
-  const SPORTS = ['Diya', 'Kabir', 'Ishaan'];
-  const base = { left: MERIT, right: SPORTS };
-  const sq = op => [`SELECT student FROM merit_list`, op, `SELECT student FROM sports_list;`];
+  /* Set operations run on the SAME two tables as every join above: the
+     customer_id column of customers, and the customer_id column of orders. */
+  const CUST = ['1', '2', '3'];
+  const ORD  = ['1', '1', '2', '4'];
+  const base = { left: CUST, right: ORD };
+  const sq = op => ['SELECT customer_id FROM customers', op, 'SELECT customer_id FROM orders;'];
+  const out = arr => arr.map(t => (typeof t === 'string' ? { t } : t));
   return {
     id: 'sets', kicker: 'Vertical, not horizontal', title: 'Set operations stack rows',
-    legend: `<span class="a">&#9632;</span> from merit &nbsp; <span class="k">&#9632;</span> in result &nbsp; ` +
+    legend: `<span class="a">&#9632;</span> from customers &nbsp; <span class="k">&#9632;</span> in result &nbsp; ` +
             `<span class="n">&#9632;</span> duplicate &nbsp; <span class="d">&#9632;</span> excluded`,
     sql: sq('UNION'),
-    vennLabels: ['merit', 'sports'],
+    vennLabels: ['customers', 'orders'],
     steps: [
-      { say: `<p>A join adds <strong>columns</strong> &mdash; it works horizontally. A set operation
-              adds <strong>rows</strong> &mdash; it works vertically.</p>
-              <p>Two lists: a merit list and a sports list.</p>`,
+      { say: `<p>A join adds <strong>columns</strong> &mdash; horizontal. A set operation adds
+              <strong>rows</strong> &mdash; vertical.</p>
+              <p>Same two tables as before, but now we take just one column from each:
+              <code>customer_id</code>. Customers holds <strong>1, 2, 3</strong>; orders holds
+              <strong>1, 1, 2, 4</strong> &mdash; Aarav twice, and the orphan 4.</p>`,
         scene: { mode: 'sets', sets: { ...base, out: [] } } },
-      { say: `<p><code>UNION ALL</code> just stacks them. Nothing is examined, nothing removed &mdash;
-              <strong>6 rows</strong>, duplicates and all.</p>`,
-        venn: { on: 'left mid right', cap: 'everything, duplicates kept' },
+
+      { say: `<p><code>UNION ALL</code> just stacks them. Nothing examined, nothing removed &mdash;
+              3 + 4 = <strong>7 rows</strong>, duplicates and all.</p>`,
         sql: sq('UNION ALL'), hi: [1],
+        venn: { on: 'left mid right', cap: 'everything, duplicates kept' },
         scene: { mode: 'sets', sets: { ...base,
-          out: [...MERIT.map(t => ({ t })), ...SPORTS.map(t => ({ t, dupe: MERIT.includes(t) }))] } },
-        res: { tag: 'union all', cols: ['student'],
-               rows: [...MERIT, ...SPORTS].map(t => [t]) } },
+          out: [...out(CUST), ...ORD.map(t => ({ t, dupe: CUST.includes(t) }))] } },
+        res: { tag: 'union all', cols: ['customer_id'], rows: [...CUST, ...ORD].map(t => [t]) } },
+
       { say: `<p><code>UNION</code> stacks them and then runs a <strong>de-duplication pass</strong>.
-              Diya and Kabir collapse to one each &mdash; <strong>4 rows</strong>, and a sort you paid for.</p>`,
-        venn: { on: 'left mid right', cap: 'everything, each row once' },
+              The two 1s collapse to one, and 2 appears once &mdash; <strong>4 rows</strong>, plus a sort
+              you paid for.</p>`,
         sql: sq('UNION'), hi: [1],
-        scene: { mode: 'sets', sets: { ...base, hotL: MERIT, hotR: ['Ishaan'],
-          out: [...MERIT, 'Ishaan'].map(t => ({ t })) } },
-        res: { tag: 'union', cols: ['student'], rows: [...MERIT, 'Ishaan'].map(t => [t]) } },
+        venn: { on: 'left mid right', cap: 'everything, each row once' },
+        scene: { mode: 'sets', sets: { ...base, hotL: CUST, hotR: ['4'],
+          out: out(['1', '2', '3', '4']) } },
+        res: { tag: 'union', cols: ['customer_id'], rows: [['1'], ['2'], ['3'], ['4']] } },
+
       { say: `<p>When does the difference matter? Only when a duplicate is a <strong>real separate
-              event</strong> you must count &mdash; two purchases, two logins. On a unique key,
+              event</strong> you must count. Here it is: customer 1 appears twice in orders because
+              Aarav <em>placed two orders</em>.</p>
+              <p><code>UNION</code> would hide that. On a unique key duplicates cannot occur, so
               <code>UNION ALL</code> is simply the faster choice.</p>`,
         sql: sq('UNION'),
-        scene: { mode: 'sets', sets: { ...base, out: [...MERIT, 'Ishaan'].map(t => ({ t })) } } },
-      { say: `<p><code>INTERSECT</code> keeps only rows present in <strong>both</strong> &mdash;
-              the students on the merit list <em>and</em> the sports list.</p>`,
-        venn: { on: 'mid', cap: 'present in both' },
+        scene: { mode: 'sets', sets: { ...base, hotR: ['1'], out: out(['1', '2', '3', '4']) } } },
+
+      { say: `<p><code>INTERSECT</code> keeps only values present in <strong>both</strong> &mdash;
+              the customers who have actually placed an order.</p>
+              <p>1 and 2. Aarav and Diya.</p>`,
         sql: sq('INTERSECT'), hi: [1],
-        scene: { mode: 'sets', sets: { ...base, hotL: ['Diya', 'Kabir'], hotR: ['Diya', 'Kabir'],
-          dimL: ['Aarav'], dimR: ['Ishaan'], out: [{ t: 'Diya' }, { t: 'Kabir' }] } },
-        res: { tag: 'intersect', cols: ['student'], rows: [['Diya'], ['Kabir']] } },
-      { say: `<p>If the two queries share nothing, INTERSECT returns an <strong>empty set &mdash;
-              0 rows</strong>. That is a valid answer, not an error.</p>`,
-        sql: sq('INTERSECT'),
-        scene: { mode: 'sets', sets: { ...base, dimL: MERIT, dimR: SPORTS, out: [] } } },
-      { say: `<p><code>EXCEPT</code> keeps rows in the <strong>first</strong> set that are not in the
-              second. It is <em>not</em> symmetric &mdash; swap the queries and you get Ishaan instead.</p>
-              <p>This is how you find gaps: customers with no orders, users who never logged in.</p>`,
-        venn: { on: 'left', cap: 'in the first, not the second' },
+        venn: { on: 'mid', cap: 'present in both' },
+        scene: { mode: 'sets', sets: { ...base, hotL: ['1', '2'], hotR: ['1', '2'],
+          dimL: ['3'], dimR: ['4'], out: out(['1', '2']) } },
+        res: { tag: 'intersect', cols: ['customer_id'], rows: [['1'], ['2']] } },
+
+      { say: `<p><code>EXCEPT</code> keeps values in the <strong>first</strong> set that are not in the
+              second. Customers minus orders gives <strong>3</strong> &mdash; Kabir, who never ordered.</p>
+              <p>This is the anti-join from earlier, written as sets.</p>`,
         sql: sq('EXCEPT'), hi: [1],
-        scene: { mode: 'sets', sets: { ...base, hotL: ['Aarav'], dimL: ['Diya', 'Kabir'],
-          dimR: SPORTS, out: [{ t: 'Aarav' }] } },
-        res: { tag: 'except', cols: ['student'], rows: [['Aarav']] } }
+        venn: { on: 'left', cap: 'in customers, not in orders' },
+        scene: { mode: 'sets', sets: { ...base, hotL: ['3'], dimL: ['1', '2'], dimR: ORD,
+          out: out(['3']) } },
+        res: { tag: 'never ordered', cols: ['customer_id'], rows: [['3']] } },
+
+      { say: `<p>EXCEPT is <strong>not symmetric</strong>. Swap the two queries and you get
+              <strong>4</strong> instead &mdash; the orphan order's customer, who does not exist.</p>
+              <p>Two queries, opposite directions, and between them they find <em>both</em> broken
+              rows &mdash; the same two the FULL OUTER JOIN surfaced.</p>`,
+        sql: ['SELECT customer_id FROM orders', 'EXCEPT', 'SELECT customer_id FROM customers;'],
+        hi: [1],
+        venn: { on: 'right', cap: 'in orders, not in customers' },
+        scene: { mode: 'sets', sets: { ...base, hotR: ['4'], dimR: ['1', '2'], dimL: CUST,
+          out: out(['4']) } },
+        res: { tag: 'orphan', cols: ['customer_id'], rows: [['4']] } },
+
+      { say: `<p>One rule governs all four: both SELECTs must return the <strong>same number of
+              columns</strong>, in the same order, with compatible types. Column names come from the
+              first SELECT.</p>
+              <p><code>ORDER BY</code> belongs to the whole result, so it goes at the very end, once.
+              And <code>INTERSECT</code> binds tighter than the other two &mdash; parenthesise when you
+              mix them.</p>`,
+        sql: ['SELECT customer_id FROM customers', 'UNION',
+              'SELECT customer_id FROM orders', 'ORDER BY customer_id;'],
+        hi: [3],
+        scene: { mode: 'sets', sets: { ...base, out: out(['1', '2', '3', '4']) } },
+        res: { tag: 'union', cols: ['customer_id'], rows: [['1'], ['2'], ['3'], ['4']] } }
     ]
   };
 })(),

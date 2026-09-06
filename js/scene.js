@@ -43,9 +43,9 @@ const LAYOUT = {
   customer: { title: 'customers', cols: [380, 235, 273], head: ['customer_id', 'name', 'city'] },
   order:    { title: 'orders',    cols: [285, 390, 213], head: ['order_id', 'customer_id', 'amount'] },
   result:   { title: 'result',    cols: [444, 444],      head: ['name', 'amount'] },
-  setL:     { title: 'merit_list',  cols: [888],         head: ['student'] },
-  setR:     { title: 'sports_list', cols: [888],         head: ['student'] },
-  setOut:   { title: 'result',      cols: [888],         head: ['student'] },
+  setL:     { title: 'customers',   cols: [888],         head: ['customer_id'] },
+  setR:     { title: 'orders',      cols: [888],         head: ['customer_id'] },
+  setOut:   { title: 'result',      cols: [888],         head: ['customer_id'] },
   selfC:    { title: 'customers  c  (the customer)', cols: [120, 250, 518],
               head: ['id', 'name', 'referred_by'] },
   selfR:    { title: 'customers  r  (the referrer)', cols: [200, 688],
@@ -438,26 +438,32 @@ export function createScene(canvas) {
       headers.setR.tOpacity = R.length ? 1 : 0;
 
       headers.setOut.setState('header');
-      headers.setOut.moveTo(0, headY(O.length, 0.86), FRONT_Z);
       headers.setOut.tOpacity = O.length ? 1 : 0;
 
       L.forEach((n, i) => {
-        const card = setCard('l', n);
+        const card = setCard('l', i + ':' + n, n);
         card.moveTo(-COL_X, stackY(i, L.length), BACK_Z);
         card.tOpacity = (sets.dimL || []).includes(n) ? 0.32 : 1;
         card.setState((sets.dimL || []).includes(n) ? 'drop'
           : (sets.hotL || []).includes(n) ? 'active' : 'idle');
       });
       R.forEach((n, i) => {
-        const card = setCard('r', n);
+        const card = setCard('r', i + ':' + n, n);
         card.moveTo(COL_X, stackY(i, R.length), BACK_Z);
         card.tOpacity = (sets.dimR || []).includes(n) ? 0.32 : 1;
         card.setState((sets.dimR || []).includes(n) ? 'drop'
           : (sets.hotR || []).includes(n) ? 'active' : 'idle');
       });
+      const many = O.length > 5;
+      const oStep = many ? 0.66 : 0.86;
+      const oScale = many ? 0.72 : 1;
+      const oCardH = CARD_H * oScale;
+      const oOff = -((oCardH / 2 + GAP + HEAD_H) + (-(O.length - 1) * oStep - oCardH / 2)) / 2;
+      headers.setOut.moveTo(0, oCardH / 2 + GAP + HEAD_H / 2 + oOff, FRONT_Z);
       O.forEach((row, i) => {
         const card = setCard('o', row.t + '#' + i, row.t);
-        card.moveTo(0, stackY(i, O.length, 0.86), FRONT_Z);
+        card.moveTo(0, -i * oStep + oOff, FRONT_Z);
+        card.tScale = oScale;
         card.tOpacity = 1;
         card.setState(row.dupe ? 'ghost' : 'result');
       });
