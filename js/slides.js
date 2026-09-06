@@ -286,6 +286,76 @@ export const slides = [
   ]
 },
 
+/* ------------------------------------------------------- 8 (self) */
+{
+  id: 'self', kicker: 'Same table, twice', title: 'SELF JOIN &mdash; a table joined to itself',
+  legend: LEGEND_JOIN,
+  sql: ['SELECT c.name AS customer,',
+        '       r.name AS referred_by',
+        'FROM   customers c',
+        'JOIN   customers r  ON c.referred_by = r.customer_id;'],
+  steps: [
+    { say: `<p>One extra column changes the question. Every customer was <strong>referred by another
+            customer</strong>, and that referrer's id sits in the <em>same table</em>.</p>
+            <p>Print each customer next to the <strong>name</strong> of whoever referred them. The answer
+            lives in the same table as the question.</p>`,
+      scene: { mode: 'self' },
+      res: { tag: 'customers', cols: ['customer_id', 'name', 'referred_by'],
+             rows: [['1', 'Aarav', 'NULL'], ['2', 'Diya', '1'], ['3', 'Kabir', '1']] } },
+
+    { say: `<p>The trick: take <strong>two copies</strong> of the one table under two aliases.
+            <code>c</code> plays &ldquo;the customer&rdquo;; <code>r</code> plays
+            &ldquo;the referrer&rdquo;.</p>
+            <p>From here it is an ordinary join &mdash; the two &ldquo;tables&rdquo; just happen to be the
+            same one. <strong>The aliases are what make it possible</strong>: without them every column
+            reference is ambiguous.</p>`,
+      hi: [2, 3],
+      scene: { mode: 'self', focus: { c: [1, 2, 3], r: [1, 2, 3] } } },
+
+    { say: `<p>Match <code>c.referred_by</code> against <code>r.customer_id</code>. Diya's
+            <code>referred_by</code> is <strong>1</strong>, so she pairs with the <em>r</em> row whose
+            id is 1 &mdash; Aarav.</p>`,
+      hi: [3],
+      scene: { mode: 'self', focus: { c: [2], r: [1] }, verdict: 'keep',
+               links: [{ c: 2, r: 1, verdict: 'keep' }], results: [{ c: 2, r: 1 }] },
+      res: { cols: ['customer', 'referred_by'], rows: [['Diya', 'Aarav']] } },
+
+    { say: `<p>Kabir's <code>referred_by</code> is also <strong>1</strong>, so he pairs with Aarav too.
+            One row on the <em>r</em> side can serve many rows on the <em>c</em> side.</p>`,
+      hi: [3],
+      scene: { mode: 'self', focus: { c: [3], r: [1] }, verdict: 'keep',
+               links: [{ c: 2, r: 1, verdict: 'keep' }, { c: 3, r: 1, verdict: 'keep' }],
+               results: [{ c: 2, r: 1 }, { c: 3, r: 1 }] },
+      res: { cols: ['customer', 'referred_by'], rows: [['Diya', 'Aarav'], ['Kabir', 'Aarav']] } },
+
+    { say: `<p><strong>Aarav drops out.</strong> Nobody referred him, so his
+            <code>referred_by</code> is <span class="n">NULL</span> &mdash; and
+            <code>NULL = anything</code> is never true. Not false: <em>unknown</em>. An INNER join keeps
+            only rows where the condition is <strong>true</strong>.</p>
+            <p><strong>2 rows.</strong></p>`,
+      hi: [3],
+      scene: { mode: 'self', dim: { c: [1] },
+               links: [{ c: 2, r: 1, verdict: 'keep' }, { c: 3, r: 1, verdict: 'keep' }],
+               results: [{ c: 2, r: 1 }, { c: 3, r: 1 }] },
+      res: { cols: ['customer', 'referred_by'], rows: [['Diya', 'Aarav'], ['Kabir', 'Aarav']] } },
+
+    { say: `<p>Same keep-rule as before: switch to <code>LEFT JOIN</code> and Aarav survives, NULL-padded.
+            <code>COALESCE</code> turns that NULL into something a reader understands.</p>
+            <p><strong>3 rows.</strong> The same shape solves employee&nbsp;&rarr;&nbsp;manager,
+            category&nbsp;&rarr;&nbsp;parent, and comment&nbsp;&rarr;&nbsp;parent.</p>`,
+      sql: ['SELECT c.name AS customer,',
+            "       COALESCE(r.name, '-- direct signup --') AS referred_by",
+            'FROM   customers c',
+            'LEFT JOIN customers r  ON c.referred_by = r.customer_id;'],
+      hi: [1, 3],
+      scene: { mode: 'self', focus: { c: [1] },
+               links: [{ c: 2, r: 1, verdict: 'keep' }, { c: 3, r: 1, verdict: 'keep' }],
+               results: [{ c: 1, r: null }, { c: 2, r: 1 }, { c: 3, r: 1 }] },
+      res: { cols: ['customer', 'referred_by'],
+             rows: [['Aarav', 'NULL'], ['Diya', 'Aarav'], ['Kabir', 'Aarav']] } }
+  ]
+},
+
 /* ---------------------------------------------------------------- 8 */
 {
   id: 'cross', kicker: 'The trap', title: 'Forget ON and rows multiply',

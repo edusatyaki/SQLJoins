@@ -46,6 +46,11 @@ const LAYOUT = {
   setL:     { title: 'merit_list',  cols: [888],         head: ['student'] },
   setR:     { title: 'sports_list', cols: [888],         head: ['student'] },
   setOut:   { title: 'result',      cols: [888],         head: ['student'] },
+  selfC:    { title: 'customers  c  (the customer)', cols: [120, 250, 518],
+              head: ['id', 'name', 'referred_by'] },
+  selfR:    { title: 'customers  r  (the referrer)', cols: [200, 688],
+              head: ['id', 'name'] },
+  selfOut:  { title: 'result',      cols: [444, 444],    head: ['customer', 'referred_by'] },
   set:      { title: 'students',    cols: [888],         head: ['student'] }
 };
 
@@ -232,8 +237,15 @@ export function createScene(canvas) {
     result: new Card(headTexture('result'), HEAD_H),
     setL:   new Card(headTexture('setL'), HEAD_H),
     setR:   new Card(headTexture('setR'), HEAD_H),
-    setOut: new Card(headTexture('setOut'), HEAD_H)
+    setOut: new Card(headTexture('setOut'), HEAD_H),
+    selfC:  new Card(headTexture('selfC'), HEAD_H),
+    selfR:  new Card(headTexture('selfR'), HEAD_H),
+    selfOut:new Card(headTexture('selfOut'), HEAD_H)
   };
+  /* the same three customers, seen twice: as "the customer" and as "the referrer" */
+  const selfCCards = new Map(CUSTOMERS.map(c => [c.id, new Card(rowTexture(c.selfCells, 'selfC'))]));
+  const selfRCards = new Map(CUSTOMERS.map(c => [c.id, new Card(rowTexture(c.refCells, 'selfR'))]));
+  const selfOutCards = new Map();
   const leftCards = new Map(CUSTOMERS.map(c => [c.id, new Card(rowTexture(c.cells, 'customer'))]));
   const rightCards = new Map(ORDERS.map(o => [o.id, new Card(rowTexture(o.cells, 'order'))]));
   const resultCards = new Map();
@@ -241,11 +253,14 @@ export function createScene(canvas) {
 
   const all = () => [
     ...Object.values(headers), ...leftCards.values(), ...rightCards.values(),
-    ...resultCards.values(), ...setCards.values()
+    ...resultCards.values(), ...setCards.values(),
+    ...selfCCards.values(), ...selfRCards.values(), ...selfOutCards.values()
   ];
   Object.values(headers).forEach(c => scene.add(c.group));
   leftCards.forEach(c => scene.add(c.group));
   rightCards.forEach(c => scene.add(c.group));
+  selfCCards.forEach(c => scene.add(c.group));
+  selfRCards.forEach(c => scene.add(c.group));
 
   const MAX_LINKS = 40;
   const linkPos = new Float32Array(MAX_LINKS * 6);
@@ -285,6 +300,21 @@ export function createScene(canvas) {
     }
     return resultCards.get(key);
   }
+  function selfOutCard(cid, rid) {
+    const key = `${cid}-${rid ?? 'x'}`;
+    if (!selfOutCards.has(key)) {
+      const me = CUSTOMERS.find(c => c.id === cid);
+      const by = rid == null ? null : CUSTOMERS.find(c => c.id === rid);
+      const card = new Card(rowTexture([
+        { t: me ? me.name : '?' },
+        by ? { t: by.name } : { t: 'NULL', dim: true }
+      ], 'selfOut'));
+      selfOutCards.set(key, card);
+      scene.add(card.group);
+    }
+    return selfOutCards.get(key);
+  }
+
   function setCard(side, name, label) {
     const key = `${side}:${name}`;
     if (!setCards.has(key)) {
@@ -353,6 +383,45 @@ export function createScene(canvas) {
 
       activeLinks = (s.links || []).map(L => ({
         a: leftCards.get(L.l), b: rightCards.get(L.r),
+        c: L.verdict === 'keep' ? 0x4FBF8B : L.verdict === 'drop' ? 0x50596A : 0x58A6E8
+      })).filter(L => L.a && L.b);
+    }
+
+    if (mode === 'self') {
+      const N = CUSTOMERS.length;
+      headers.selfC.setState('header');
+      headers.selfC.moveTo(-COL_X, headY(N), BACK_Z);
+      headers.selfC.tOpacity = 1;
+      headers.selfR.setState('header');
+      headers.selfR.moveTo(COL_X, headY(N), BACK_Z);
+      headers.selfR.tOpacity = 1;
+      headers.selfOut.setState('header');
+      headers.selfOut.moveTo(0, headY(results.length), FRONT_Z);
+      headers.selfOut.tOpacity = results.length ? 1 : 0;
+
+      CUSTOMERS.forEach((c, i) => {
+        const card = selfCCards.get(c.id);
+        card.moveTo(-COL_X, stackY(i, N), BACK_Z);
+        card.tOpacity = has(dim.c, c.id) ? 0.34 : 1;
+        card.setState(has(dim.c, c.id) ? 'drop'
+          : has(focus.c, c.id) ? (s.verdict === 'keep' ? 'keep' : 'active') : 'idle');
+      });
+      CUSTOMERS.forEach((c, i) => {
+        const card = selfRCards.get(c.id);
+        card.moveTo(COL_X, stackY(i, N), BACK_Z);
+        card.tOpacity = has(dim.r, c.id) ? 0.34 : 1;
+        card.setState(has(dim.r, c.id) ? 'drop'
+          : has(focus.r, c.id) ? (s.verdict === 'keep' ? 'keep' : 'active') : 'idle');
+      });
+      results.forEach((pair, i) => {
+        const card = selfOutCard(pair.c, pair.r);
+        card.moveTo(0, stackY(i, results.length), FRONT_Z);
+        card.tOpacity = 1;
+        card.setState(pair.r == null ? 'ghost' : 'result');
+      });
+
+      activeLinks = (s.links || []).map(L => ({
+        a: selfCCards.get(L.c), b: selfRCards.get(L.r),
         c: L.verdict === 'keep' ? 0x4FBF8B : L.verdict === 'drop' ? 0x50596A : 0x58A6E8
       })).filter(L => L.a && L.b);
     }

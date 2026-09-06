@@ -28,10 +28,12 @@ Swipe left/right on touch devices. The current step is written into the URL
 3. **`ON`, evaluated pair by pair** — all 12 comparisons, one keypress each
 4. `INNER` / `LEFT` / `RIGHT` / `FULL OUTER` — the four keep-rules, each with a
    Venn diagram of the regions it keeps alongside the actual rows
-5. The Cartesian product trap
-6. `WHERE` vs `ON`, and how `WHERE` silently downgrades a `LEFT JOIN`
-7. `UNION` / `UNION ALL` / `INTERSECT` / `EXCEPT`
-8. Recap
+5. **Self join** — the same table under two aliases, shown as two columns of the
+   same rows with the referral links drawn between them
+6. The Cartesian product trap
+7. `WHERE` vs `ON`, and how `WHERE` silently downgrades a `LEFT JOIN`
+8. `UNION` / `UNION ALL` / `INTERSECT` / `EXCEPT`
+9. Recap
 
 ## Running locally
 
