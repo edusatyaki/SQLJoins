@@ -86,17 +86,20 @@ export const slides = [
   legend: LEGEND_JOIN,
   sql: ['SELECT * FROM customers;', 'SELECT * FROM orders;'],
   steps: [
-    { say: `<p><strong>customers</strong> &mdash; three rows. Each has an id, a name and a city.</p>`,
+    { say: `<p><strong>customers</strong> &mdash; three rows. An id, a name, a city, and
+            <code>referred_by</code>, which points back into this same table &mdash; that is the one the
+            self join uses.</p>`,
       hi: [0],
       scene: { mode: 'join', show: { right: false } },
-      res: { tag: 'customers', cols: ['customer_id', 'name', 'city'],
-             rows: CUSTOMERS.map(c => c.cells) } },
-    { say: `<p><strong>orders</strong> &mdash; four rows. Each carries a
-            <code>customer_id</code> saying who placed it.</p>`,
+      res: { tag: 'customers', cols: ['customer_id', 'name', 'city', 'referred_by'],
+             rows: CUSTOMERS.map(c => c.fullCells) } },
+    { say: `<p><strong>orders</strong> &mdash; four rows and four columns. Each carries a
+            <code>customer_id</code> saying who placed it, a <code>product_id</code> used when we chain
+            in a third table, and an <code>amount</code>.</p>`,
       hi: [1],
       scene: { mode: 'join' },
-      res: { tag: 'orders', cols: ['order_id', 'customer_id', 'amount'],
-             rows: ORDERS.map(o => o.cells) } },
+      res: { tag: 'orders', cols: ['order_id', 'customer_id', 'product_id', 'amount'],
+             rows: ORDERS.map(o => o.fullCells) } },
     { say: `<p><code>customer_id</code> is the <strong>bridge column</strong>. It is the only
             thing the two tables share, and every join below is built on it.</p>`,
       scene: { mode: 'join', focus: { l: [1, 2, 3], r: [101, 102, 103, 104] } } },
