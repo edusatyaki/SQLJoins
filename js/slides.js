@@ -84,22 +84,20 @@ export const slides = [
 {
   id: 'data', kicker: 'Step 1', title: 'Meet the data',
   legend: LEGEND_JOIN,
-  sql: ['SELECT * FROM customers;', 'SELECT * FROM orders;'],
+  sql: ['SELECT customer_id, name, city   FROM customers;',
+        'SELECT order_id, customer_id, amount FROM orders;'],
   steps: [
-    { say: `<p><strong>customers</strong> &mdash; three rows. An id, a name, a city, and
-            <code>referred_by</code>, which points back into this same table &mdash; that is the one the
-            self join uses.</p>`,
+    { say: `<p><strong>customers</strong> &mdash; three rows: an id, a name and a city.</p>`,
       hi: [0],
       scene: { mode: 'join', show: { right: false } },
-      res: { tag: 'customers', cols: ['customer_id', 'name', 'city', 'referred_by'],
-             rows: CUSTOMERS.map(c => c.fullCells) } },
-    { say: `<p><strong>orders</strong> &mdash; four rows and four columns. Each carries a
-            <code>customer_id</code> saying who placed it, a <code>product_id</code> used when we chain
-            in a third table, and an <code>amount</code>.</p>`,
+      res: { tag: 'customers', cols: ['customer_id', 'name', 'city'],
+             rows: CUSTOMERS.map(c => c.cells) } },
+    { say: `<p><strong>orders</strong> &mdash; four rows. Each carries a
+            <code>customer_id</code> saying who placed it, and an <code>amount</code>.</p>`,
       hi: [1],
       scene: { mode: 'join' },
-      res: { tag: 'orders', cols: ['order_id', 'customer_id', 'product_id', 'amount'],
-             rows: ORDERS.map(o => o.fullCells) } },
+      res: { tag: 'orders', cols: ['order_id', 'customer_id', 'amount'],
+             rows: ORDERS.map(o => o.cells) } },
     { say: `<p><code>customer_id</code> is the <strong>bridge column</strong>. It is the only
             thing the two tables share, and every join below is built on it.</p>`,
       scene: { mode: 'join', focus: { l: [1, 2, 3], r: [101, 102, 103, 104] } } },
@@ -279,9 +277,14 @@ export const slides = [
                results: [...ALL_MATCHES, { l: 3, r: null }, { l: null, r: 104 }] },
       res: { cols: RES_COLS,
              rows: [...ALL_MATCHES, { l: 3, r: null }, { l: null, r: 104 }].map(pairRow) } },
-    { say: `<p>This is the <strong>data-quality</strong> join. Add
-            <code>WHERE c.customer_id IS NULL OR o.order_id IS NULL</code> and you get exactly the
-            two broken rows &mdash; every dangling reference in one query.</p>`,
+    { say: `<p>This is the <strong>data-quality</strong> join. Keep the FULL OUTER and filter for the
+            rows that failed to pair, and you get exactly the two broken rows &mdash; every dangling
+            reference in one query.</p>`,
+      sql: ['SELECT c.name, o.amount',
+            'FROM   customers c',
+            'FULL OUTER JOIN orders o ON c.customer_id = o.customer_id',
+            'WHERE  c.customer_id IS NULL OR o.order_id IS NULL;'],
+      hi: [3],
       scene: { mode: 'join', links: [], focus: { l: [3], r: [104] },
                results: [{ l: 3, r: null }, { l: null, r: 104 }] },
       res: { tag: 'broken links', cols: RES_COLS,
@@ -302,6 +305,8 @@ export const slides = [
             customer</strong>, and that referrer's id sits in the <em>same table</em>.</p>
             <p>Print each customer next to the <strong>name</strong> of whoever referred them. The answer
             lives in the same table as the question.</p>`,
+      sql: ['SELECT customer_id, name, referred_by FROM customers;'],
+      hi: [0],
       scene: { mode: 'self' },
       res: { tag: 'customers', cols: ['customer_id', 'name', 'referred_by'],
              rows: [['1', 'Aarav', 'NULL'], ['2', 'Diya', '1'], ['3', 'Kabir', '1']] } },
@@ -355,7 +360,7 @@ export const slides = [
                links: [{ c: 2, r: 1, verdict: 'keep' }, { c: 3, r: 1, verdict: 'keep' }],
                results: [{ c: 1, r: null }, { c: 2, r: 1 }, { c: 3, r: 1 }] },
       res: { cols: ['customer', 'referred_by'],
-             rows: [['Aarav', 'NULL'], ['Diya', 'Aarav'], ['Kabir', 'Aarav']] } }
+             rows: [['Aarav', '-- direct signup --'], ['Diya', 'Aarav'], ['Kabir', 'Aarav']] } }
   ]
 },
 
@@ -402,10 +407,13 @@ export const slides = [
         '  ON c.customer_id = o.customer_id',
         '  AND o.amount > 5000;      -- in ON'],
   steps: [
-    { say: `<p>Add a filter <code>o.amount &gt; 5000</code>. Where you put it changes the answer,
+    { say: `<p>Start from the plain LEFT JOIN: <strong>4 rows</strong>, Kabir NULL-padded.</p>
+            <p>Now add a filter <code>o.amount &gt; 5000</code>. Where you put it changes the answer,
             because <code>ON</code> and <code>WHERE</code> run at <em>different times</em>.</p>`,
-      hi: [4], scene: { mode: 'join', links: keepLinks, results: ALL_MATCHES },
-      res: { cols: RES_COLS, rows: ALL_MATCHES.map(pairRow) } },
+      sql: SQL_JOIN('LEFT  JOIN'),
+      scene: { mode: 'join', links: keepLinks,
+               results: [...ALL_MATCHES, { l: 3, r: null }] },
+      res: { cols: RES_COLS, rows: [...ALL_MATCHES, { l: 3, r: null }].map(pairRow) } },
     { say: `<p><strong>In <code>ON</code></strong> the condition runs <em>during</em> the join. It only
             decides which orders match. Aarav's &#8377;1,200 simply never pairs up.</p>`,
       hi: [3, 4],
